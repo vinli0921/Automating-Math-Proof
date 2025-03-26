@@ -172,3 +172,30 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# env files
+.env
+*.env
+
+# local env files
+.env*.local
+
+# xml files
+*.xml
+
+# csv files
+*.csv
+
+# venv files
+*venv/
+*venv_*
+
+# python cache files
+__pycache__/
+**/__pycache__/
+
+# python version
+.python-version
+
+# mathlib
+mathlib4/
