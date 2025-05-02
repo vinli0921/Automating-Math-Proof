@@ -278,7 +278,7 @@ def main(xml_dump_path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python extract_proofs_updated.py /path/to/wikiproof_dump.xml")
+        print("Usage: python extract_proofs_XML.py /path/to/wikiproof_dump.xml")
         sys.exit(1)
 
     xml_dump_path = sys.argv[1]

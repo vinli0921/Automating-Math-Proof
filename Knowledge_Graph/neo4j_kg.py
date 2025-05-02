@@ -315,10 +315,10 @@ def update_node_content(session, batch_size=1000):
 
 def main():
     with gds.session() as session:
-        #create_constraints(session)
-        #load_nodes(session, 'nodes.csv') 
+        create_constraints(session)
+        load_nodes(session, 'nodes.csv') 
         append_embeddings(session, 'embeddings.csv')
-        #load_relationships(session, 'relationships.csv') 
+        load_relationships(session, 'relationships.csv') 
         update_node_content(session)
 
 if __name__ == "__main__":

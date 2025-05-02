@@ -1,98 +1,188 @@
-# LLM-proof
-Repo for Algoverse Research
+# Automating Mathematical Proof
 
-# 1. Getting Started
-https://github.com/vinli0921/LLM-proof/blob/main/README.md
-## 1.1 Setting up the repository
-- First download [elan](https://github.com/leanprover/elan)
-- Run these commands
-```
+Official repository for the research paper: "Automating Mathematical Proof Generation Using Large Language Model
+Agents and Knowledge Graphs"
+
+## Table of Contents
+- [Getting Started](#getting-started)
+- [Extracting Proofs to Neo4j AuraDB](#extracting-proofs-to-your-own-neo4j-auradb-optional)
+- [Running Tests](#running-tests)
+
+## Getting Started
+
+### Setting up the mathlib repository
+1. First download [elan](https://github.com/leanprover/elan)
+2. Clone and build the repository:
+```bash
 git clone --recurse-submodules https://github.com/vinli0921/LLM-proof.git
 cd LLM-proof
 cd mathlib4
 lake build
 ```
 
-## 1.2 Create a virtual environment 
-- Create a virtual enviornment in the root directory of the repository.
-- You may replace "myenv" with a name of your choice
-```
-python -m venv myenv
+### Create a virtual environment
+Create a virtual environment in the root directory of the repository:
+```bash
+python -m venv venv
 ```
 
-## 1.3 Activate the virtual environment
+### Activate the virtual environment
 
-### On macOS and Linux
-```
+**On macOS and Linux:**
+```bash
 source myenv/bin/activate
 ```
 
-### On Windows
-```
+**On Windows:**
+```bash
 myenv\Scripts\activate
 ```
 
-## 1.4 Install Dependencies
-To install all packages and code dependencies please run:
-```
+### Install Dependencies
+Install all required packages and dependencies:
+```bash
 pip install -r requirements.txt
 ```
 
-## 1.5 Set Enviornment Variables
-1. In the root directory of the repository, make a new file named **.env**
-2. Copy + Paste the content from the file named **.env.example** into the newly created **.env** file
-3. Set the variables to the necessary values
+### Set Environment Variables
+1. Create a `.env` file in the root directory of the repository
+2. Copy the content from `.env.example` into the newly created `.env` file
+3. Configure the variables with appropriate values
 
-# 2. Extracting Proofs to Your Own Neo4j AuraDB (OPTIONAL)
+## Extracting Proofs to Your Own Neo4j AuraDB (OPTIONAL)
 
-## 2.1 Retrieving the XML Dump
-1. Press this link: https://proofwiki.org/xmldump/latest.xml.gz which will download a zip file
-2. Unzip the file to extract **latest.xml**
-3. Move **latest.xml** to the root directory of the repository
+### Retrieving the XML Dump
+1. Download the latest XML dump from: https://proofwiki.org/xmldump/latest.xml.gz
+2. Extract the file to obtain `latest.xml`
+3. Move `latest.xml` to the root directory of the repository
 
-## 2.2 Extracting to Nodes and Relationships from the XML file to CSV files
-run the command 
+### Extracting to Nodes and Relationships from the XML file to CSV files
+Run the extraction script:
+```bash
+python Graph_Creation/extract_proofs_XML.py latest.xml
 ```
-python Graph_Creation/extractProofsXML.py latest.xml
+
+### Uploading CSV files to Neo4j AuraDB
+Run the database upload script:
+```bash
+python neo4j_kg.py
+```
+This should successfully upload approximately 60,000 nodes and 300,000 relationships.
+
+### Building the Graph from Scratch (Optional)
+If you're creating the graph from scratch:
+
+1. Delete the existing graph (optional):
+
+   ```bash
+   python Knowledge_Graph/neo4j_delete.py
+   ```
+
+2. Initialize constraints and load data in Python:
+
+   ```python
+   from Knowledge_Graph.neo4j_kg import gds, create_constraints, load_nodes, load_relationships, append_embeddings
+
+   with gds.session() as session:
+       create_constraints(session)
+       load_nodes(session, 'nodes.csv')
+       load_relationships(session, 'relationships.csv')
+       append_embeddings(session, 'embeddings.csv')
+   ```
+
+### Generating Embeddings (Optional)
+There are two ways to create node embeddings:
+
+- From the `nodes.csv` file:
+
+   ```python
+   from Graph_Creation.embedding_chunks import generate_embeddings
+   generate_embeddings('nodes.csv', 'embeddings.csv')
+   ```
+
+- From Neo4j:
+
+   ```python
+   from Graph_Creation.embedding_chunks import generate_neo4j_embeddings
+   generate_neo4j_embeddings('embeddings.csv')
+   ```
+
+After generating embeddings with either method, upload them in Python:
+
+```python
+from Knowledge_Graph.neo4j_kg import gds, append_embeddings
+
+with gds.session() as session:
+    append_embeddings(session, 'embeddings.csv')
 ```
 
-## 2.3 Uploading CSV files to Neo4j AuraDB
-run the file **neo4j_kg.py**
-- this should successfully upload around 20k nodes and 80k relationships (give or take)
+### Creating a Vector Index (Optional)
+Create a vector index for fast cosine similarity in Python:
 
-# 3. Running Tests
-## 3.1 Configuring the LLMS
-- Go to retrieval_agent_RAG.py and retrieval_agent.py
-- You can change the LLM model of the Proof Generation agent by specifiying the model name string in the constructor located in the main method. Default model is GPT-4o.
+```python
+from Graph_Creation.vector_functions import gds, create_vector_index
 
-## 3.2 Configuring the datasets
-- Go to retrieval_agent_RAG.py and retrieval_agent.py
-- You can change the datasets by changing the dataset name string in the load_test_data function located in the main method.
-- Currently, there are two datasets:
-  - datasets/minif2f.jsonl
-  - datasets/proofnet.jsonl
-- Please also rename both the logging and results files to fit the context.
-
-## 3.3 Running the files
-**Before running the file:** ensure that the system you are on has the command ```killall```.\
-You can check by running the following in a terminal:
+with gds.session() as session:
+    create_vector_index(session)
 ```
+
+## Running Tests
+
+### Configuring the LLMs
+- Edit `retrieval_agent_RAG.py` and `retrieval_agent.py` to configure:
+  - The LLM model for the Proof Generation agent (default is GPT-4o)
+  - The dataset by changing the dataset name in the `load_test_data` function
+
+### Datasets
+Three datasets are currently available in this repository:
+- `datasets/minif2f.jsonl`
+- `datasets/proofnet.jsonl`
+- `datasets/mustard_short.jsonl`
+
+Remember to rename both the logging and results files to match your test configuration.
+
+### Frameworks
+We provide three LLM testing frameworks:
+
+1. **Default RAG + Knowledge Graph**
+   - Location: `algos_retrieval`
+   - Base: `retrieval_agent.py`
+   - RAG: `retrieval_agent_RAG.py`
+   - Graph + RAG: `retrieval_agent_graph_RAG.py`
+
+2. **Best-of-N**
+   - Built on top of the RAG + Knowledge Graph setup
+   - Location: `algos_best_of_n`
+
+3. **Tree Search**
+   - Built on top of the Best-of-N framework
+   - Location: `algos_tree_search`
+
+Each folder contains two versions: one adapted for the OpenAI API and one for the TogetherAI API (for open-source models). Feel free to adapt them to other inference APIs such as Anthropic or Hugging Face.
+
+### Running the files
+**Before running the file:** ensure that your system has the `killall` command.
+You can check by running:
+```bash
 which killall
 ```
-If this command doesn't exist in the system, please install it using the folowing commands:
-```
+
+If the command doesn't exist, install it:
+```bash
 sudo apt-get update
 sudo apt-get install psmisc
 ```
-You should now be able to run the files:
-```
+
+Now you can run the retrieval agent:
+```bash
 python retrieval_agent.py
 ```
 or
-```
+```bash
 python3 retrieval_agent.py
 ```
-If you want to use multiple GPUS (nvidia):
-```
+
+To use multiple GPUs (NVIDIA):
+```bash
 CUDA_VISIBLE_DEVICES=0,1 python3 retrieval_agent.py
 ```
