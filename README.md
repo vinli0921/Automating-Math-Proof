@@ -1,4 +1,4 @@
-# Automating Mathematical Proof
+# KG-Prover: Automating Mathematical Proof
 
 Official repository for the research paper: "Automating Mathematical Proof Generation Using Large Language Model
 Agents and Knowledge Graphs"
